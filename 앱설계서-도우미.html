@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>앱 설계서 도우미 · 4시간 만에 앱 만들기</title>
+<style>
+  :root{
+    --paper:#FFFCF2;
+    --ink:#2B2B2B;
+    --red:#E8552E;
+    --blue:#2E7DD1;
+    --green:#3FA34D;
+    --yellow:#F2B705;
+    --card:#FFFFFF;
+    --line:#2B2B2B;
+    --muted:#6B6B6B;
+    --soft:#F4F0E4;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    padding:22px 16px 80px;
+    line-height:1.6;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+
+  /* ---------- 헤더 ---------- */
+  header.top{text-align:center;margin-bottom:22px;}
+  header.top h1{font-size:30px;font-weight:900;letter-spacing:-.02em;margin:0 0 6px;}
+  header.top p{margin:0;font-size:16px;color:var(--muted);font-weight:600;}
+
+  /* ---------- 진행 표시 ---------- */
+  .steps{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 22px;}
+  .steps .dot{
+    display:flex;align-items:center;gap:7px;
+    background:var(--card);border:3px solid var(--line);border-radius:999px;
+    padding:6px 14px;font-weight:800;font-size:14px;opacity:.45;
+  }
+  .steps .dot .n{
+    width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;
+    display:grid;place-items:center;font-size:12px;
+  }
+  .steps .dot.on{opacity:1;box-shadow:4px 4px 0 var(--ink);}
+  .steps .dot.done{opacity:1;}
+  .steps .dot.done .n{background:var(--green);}
+
+  /* ---------- 카드 ---------- */
+  .panel{
+    background:var(--card);border:3px solid var(--line);border-radius:16px;
+    box-shadow:6px 6px 0 var(--ink);padding:24px;margin-bottom:22px;
+  }
+  .panel.hide{display:none;}
+  .panel-head{border-bottom:3px dashed #DDD6C2;padding-bottom:14px;margin-bottom:18px;}
+  .panel-head .kicker{font-size:14px;font-weight:800;color:var(--red);margin-bottom:4px;}
+  .panel-head h2{margin:0 0 6px;font-size:24px;font-weight:900;letter-spacing:-.02em;}
+  .panel-head .desc{margin:0;font-size:15px;color:var(--muted);font-weight:600;}
+
+  /* ---------- 입력 필드 ---------- */
+  .field{margin-bottom:24px;}
+  .field:last-child{margin-bottom:0;}
+  .field .q{display:flex;align-items:flex-start;gap:8px;font-size:17px;font-weight:800;margin-bottom:6px;}
+  .field .q .tag{
+    flex:none;background:var(--soft);border:2px solid var(--line);border-radius:8px;
+    font-size:12px;font-weight:800;padding:2px 8px;margin-top:3px;
+  }
+  .field .hint{font-size:14px;color:var(--muted);margin:0 0 8px;font-weight:600;}
+  textarea{
+    width:100%;min-height:92px;resize:vertical;
+    border:3px solid var(--line);border-radius:12px;background:#FFFEF9;
+    padding:12px 14px;font-size:15.5px;line-height:1.65;
+    font-family:inherit;color:var(--ink);
+  }
+  textarea:focus{outline:none;border-color:var(--blue);background:#fff;}
+  textarea.filled{background:#FBFFF7;}
+
+  /* ---------- 버튼 ---------- */
+  button{font-family:inherit;cursor:pointer;}
+  .btn{
+    border:3px solid var(--line);border-radius:10px;background:var(--card);
+    font-weight:800;font-size:14px;padding:7px 13px;color:var(--ink);
+    box-shadow:3px 3px 0 var(--ink);transition:transform .06s,box-shadow .06s;
+  }
+  .btn:hover{transform:translate(1px,1px);box-shadow:2px 2px 0 var(--ink);}
+  .btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink);}
+  .btn.ex{background:var(--yellow);}
+  .btn.use{background:var(--green);color:#fff;}
+  .btn.big{font-size:17px;padding:12px 24px;}
+  .btn.primary{background:var(--blue);color:#fff;}
+  .btn.ghost{box-shadow:none;border-width:2px;background:transparent;}
+  .btn.sm{font-size:13px;padding:5px 10px;box-shadow:2px 2px 0 var(--ink);}
+
+  /* ---------- 예시 박스 ---------- */
+  .ex-bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;align-items:center;}
+  .ex-note{font-size:13px;color:var(--muted);font-weight:700;}
+  .ex-box{
+    display:none;margin-top:10px;border:3px solid var(--line);border-radius:12px;
+    background:#FFF9E3;padding:14px;
+  }
+  .ex-box.open{display:block;}
+  .ex-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  .ex-head .lbl{font-size:13px;font-weight:800;color:#8A6B00;}
+  .ex-head select{
+    font-family:inherit;font-size:14px;font-weight:800;color:var(--ink);
+    border:2px solid var(--line);border-radius:8px;padding:5px 8px;background:#fff;cursor:pointer;
+    max-width:100%;
+  }
+  .ex-count{font-size:13px;font-weight:800;color:#8A6B00;}
+  .ex-text{
+    background:#fff;border:2px dashed #C9A227;border-radius:10px;padding:12px;
+    font-size:15px;white-space:pre-wrap;font-weight:600;
+  }
+  .ex-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+
+  /* ---------- 그림 캔버스 ---------- */
+  .draw-wrap{border:3px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;}
+  .toolbar{
+    display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+    padding:10px 12px;background:var(--soft);border-bottom:3px solid var(--line);
+  }
+  .tgroup{display:flex;gap:6px;align-items:center;}
+  .tgroup .glab{font-size:12.5px;font-weight:800;color:var(--muted);margin-right:2px;}
+  .swatch{
+    width:28px;height:28px;border-radius:50%;border:3px solid var(--line);cursor:pointer;padding:0;
+  }
+  .swatch.on{box-shadow:0 0 0 3px #fff,0 0 0 6px var(--blue);}
+  .size{
+    width:30px;height:30px;border-radius:8px;border:3px solid var(--line);background:#fff;
+    display:grid;place-items:center;cursor:pointer;padding:0;
+  }
+  .size i{display:block;background:var(--ink);border-radius:99px;}
+  .size.on{background:#DCEBFF;}
+  canvas#sketch{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair;background:#fff;}
+  .draw-tip{font-size:13px;color:var(--muted);font-weight:700;margin:8px 0 0;}
+
+  /* ---------- 스케치 분석 ---------- */
+  .analyze{margin-top:16px;border:3px solid var(--line);border-radius:12px;background:#F1F7FF;padding:14px;}
+  .analyze h4{margin:0 0 4px;font-size:15px;font-weight:900;}
+  .analyze .sub{margin:0 0 10px;font-size:13.5px;color:var(--muted);font-weight:600;}
+  .checks{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;}
+  .checks label{
+    display:flex;align-items:center;gap:8px;background:#fff;border:2px solid var(--line);
+    border-radius:10px;padding:8px 10px;font-size:14px;font-weight:800;cursor:pointer;
+  }
+  .checks input{width:17px;height:17px;accent-color:var(--green);cursor:pointer;}
+  .checks label.on{background:#EAF9EC;border-color:var(--green);}
+  .analyze .verdict{
+    margin-top:10px;font-size:14px;font-weight:800;padding:10px 12px;border-radius:10px;
+    background:#fff;border:2px dashed var(--blue);
+  }
+
+  /* ---------- 네비 ---------- */
+  .nav{display:flex;justify-content:space-between;gap:10px;margin-top:22px;flex-wrap:wrap;}
+  .nav .right{display:flex;gap:8px;margin-left:auto;}
+
+  /* ---------- 결과 ---------- */
+  .summary{background:#FFF;border:3px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px;}
+  .summary h3{margin:0 0 12px;font-size:18px;font-weight:900;}
+  .summary .row{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed #DDD6C2;font-size:14.5px;}
+  .summary .row:last-child{border-bottom:none;}
+  .summary .row .k{flex:none;width:120px;font-weight:900;color:var(--blue);}
+  .summary .row .v{white-space:pre-wrap;font-weight:600;}
+  .summary .row .v.empty{color:var(--red);font-weight:800;}
+  .summary .row .v img{max-width:100%;border:2px solid var(--line);border-radius:10px;display:block;}
+
+  .pcard{
+    border:3px solid var(--line);border-radius:14px;background:var(--card);
+    margin-bottom:16px;overflow:hidden;box-shadow:5px 5px 0 var(--ink);position:relative;
+  }
+  .pcard .ph{
+    display:flex;align-items:center;gap:10px;padding:12px 16px;
+    background:var(--soft);border-bottom:3px solid var(--line);flex-wrap:wrap;
+  }
+  .pcard .ph .num{
+    width:32px;height:32px;flex:none;border-radius:50%;background:var(--ink);color:#fff;
+    display:grid;place-items:center;font-weight:900;font-size:15px;
+  }
+  .pcard .ph .t{font-weight:900;font-size:16.5px;}
+  .pcard .ph .sub{font-size:13px;color:var(--muted);font-weight:700;width:100%;margin-left:42px;}
+  .pcard .pbody{padding:16px;}
+  .pcard pre{
+    margin:0;background:#20242B;color:#F4F4F4;border-radius:10px;padding:14px;
+    font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;
+    font-family:"D2Coding",Consolas,"Malgun Gothic",monospace;
+  }
+  .pcard .pactions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;}
+  .pcard .note{
+    margin-top:10px;font-size:13.5px;font-weight:700;color:#8A6B00;
+    background:#FFF9E3;border:2px dashed #C9A227;border-radius:10px;padding:9px 12px;
+  }
+  .pcard.done .ph{background:#EAF9EC;}
+  .pcard.done .ph .num{background:var(--green);}
+  .pcard .lock{
+    position:absolute;inset:0;background:rgba(255,252,242,.93);
+    display:grid;place-items:center;text-align:center;padding:20px;z-index:2;
+  }
+  .pcard .lock p{margin:0 0 10px;font-weight:800;font-size:15px;}
+  .pcard .lock .small{font-size:13px;color:var(--muted);font-weight:600;}
+  .pcard.open .lock{display:none;}
+
+  .addon{
+    width:100%;border:3px solid var(--line);border-radius:10px;padding:10px 12px;
+    font-size:15px;font-family:inherit;margin-bottom:10px;min-height:70px;resize:vertical;
+  }
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(120%);
+    background:var(--ink);color:#fff;font-weight:800;font-size:15px;
+    padding:12px 22px;border-radius:999px;transition:transform .25s;z-index:99;max-width:90vw;text-align:center;
+  }
+  .toast.on{transform:translateX(-50%) translateY(0);}
+  .warn{
+    background:#FFF0EC;border:3px solid var(--red);border-radius:12px;padding:12px 14px;
+    font-size:14.5px;font-weight:800;color:#A32E12;margin-bottom:18px;
+  }
+  @media (max-width:600px){
+    header.top h1{font-size:24px;}
+    .panel{padding:18px;}
+    .summary .row{flex-direction:column;gap:2px;}
+    .summary .row .k{width:auto;}
+    .steps .dot{font-size:12.5px;padding:5px 10px;}
+    .ex-head select{max-width:60vw;}
+  }
+  @media print{
+    body{background:#fff;padding:0;}
+    .steps,.nav,.btn,.pcard .lock,.toast,.toolbar{display:none !important;}
+    .panel,.pcard{box-shadow:none;page-break-inside:avoid;}
+    .pcard pre{background:#fff;color:#000;border:1px solid #999;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>🛠️ 나만의 앱 설계서 도우미</h1>
+    <p>4단계 기획 → 5단계 프롬프트, 순서대로 만들어 봅시다</p>
+  </header>
+
+  <div class="steps" id="steps"></div>
+
+  <!-- ================= STEP 1 ================= -->
+  <section class="panel" data-step="1">
+    <div class="panel-head">
+      <div class="kicker">1단계</div>
+      <h2>💡 아이디어 발굴</h2>
+      <p class="desc">일상 속 불편함이나 교과 과정의 원리에서 핵심 창작 동기를 도출합니다.</p>
+    </div>
+    <div id="f-idea"></div>
+  </section>
+
+  <!-- ================= STEP 2 ================= -->
+  <section class="panel hide" data-step="2">
+    <div class="panel-head">
+      <div class="kicker">2단계</div>
+      <h2>🎯 프로젝트 목표 설정</h2>
+      <p class="desc">애플리케이션의 핵심 가치와 유용성을 개발 목표로 정의합니다.</p>
+    </div>
+    <div id="f-goal"></div>
+  </section>
+
+  <!-- ================= STEP 3 ================= -->
+  <section class="panel hide" data-step="3">
+    <div class="panel-head">
+      <div class="kicker">3단계</div>
+      <h2>✏️ 자유 아이디어 스케치</h2>
+      <p class="desc">기술적 제약이나 형식에 매이지 않고, 만들고 싶은 화면을 자유롭게 그려 보세요.</p>
+    </div>
+
+    <div class="field" style="margin-bottom:16px">
+      <div class="q"><span class="tag">3단계</span><span>내 앱의 화면을 손으로 그려 보세요.</span></div>
+      <p class="hint">글씨도 함께 써 넣으면 좋아요. 무엇이 보이는지 · 어디를 누르는지 · 누르면 무슨 일이 생기는지!</p>
+
+      <div class="draw-wrap">
+        <div class="toolbar">
+          <div class="tgroup" id="colors"><span class="glab">색</span></div>
+          <div class="tgroup" id="sizes"><span class="glab">굵기</span></div>
+          <div class="tgroup">
+            <button class="btn sm" id="eraserBtn">🧽 지우개</button>
+            <button class="btn sm" id="undoBtn">↩️ 되돌리기</button>
+            <button class="btn sm" id="clearBtn">🗑️ 전체 지우기</button>
+          </div>
+        </div>
+        <canvas id="sketch" width="1000" height="620"></canvas>
+      </div>
+      <p class="draw-tip">✍️ 마우스나 손가락(터치)으로 자유롭게 그려 보세요. 그린 그림은 자동 저장됩니다.</p>
+    </div>
+
+    <div class="analyze">
+      <h4>🔍 내 스케치 분석하기</h4>
+      <p class="sub">내가 그린 그림에 이미 들어있는 항목을 체크해 보세요. 체크되지 않은 항목은 4단계에서 꼭 채워야 합니다.</p>
+      <div class="checks" id="sketchChecks"></div>
+      <div class="verdict" id="verdict">아직 체크한 항목이 없습니다.</div>
+    </div>
+  </section>
+
+  <!-- ================= STEP 4 ================= -->
+  <section class="panel hide" data-step="4">
+    <div class="panel-head">
+      <div class="kicker">4단계</div>
+      <h2>🧩 핵심 구조 체계화 <span style="font-size:16px;color:var(--muted)">(5대 핵심 요소)</span></h2>
+      <p class="desc">그림으로 그린 아이디어를 5대 핵심 요소로 나누어 정교하게 구조화합니다.</p>
+    </div>
+    <div class="warn">⚠️ 기획서에 비어 있는 공백은 AI가 임의의 가상 판단으로 채웁니다. 5칸을 모두 채워 주세요!</div>
+    <div id="f-core"></div>
+  </section>
+
+  <!-- ================= STEP 5 ================= -->
+  <section class="panel hide" data-step="5">
+    <div class="panel-head">
+      <div class="kicker">완성</div>
+      <h2>🚀 단계별 프롬프트 (1 → 5단계)</h2>
+      <p class="desc">한 번에 복붙하지 말고, <b>1단계부터 순서대로</b> Gemini Canvas에 넣어 결과를 확인하며 진행하세요.</p>
+    </div>
+    <div class="summary" id="summary"></div>
+    <div id="prompts"></div>
+    <div class="nav">
+      <button class="btn" id="backTo4">← 기획서 고치기</button>
+      <div class="right">
+        <button class="btn" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+        <button class="btn primary" id="copyAll">📋 전체 프롬프트 복사</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="nav" id="mainNav">
+    <button class="btn" id="prevBtn">← 이전</button>
+    <div class="right">
+      <button class="btn ghost" id="resetBtn">전체 지우기</button>
+      <button class="btn primary big" id="nextBtn">다음 →</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =======================================================================
+   예시 10종 (교안 예제 2종 + 확장 8종)
+   ======================================================================= */
+const EXAMPLES = [
+{
+  name:"① [게임] 장애물 피하기 러너",
+  idea:"쉬는 시간에 친구와 짧게 겨룰 수 있는 게임이 있으면 좋겠다는 생각에서 시작함. 조작은 단순하지만 점점 빨라져 손에 땀을 쥐게 하는 게임을 만들고 싶었음",
+  goal:"점프 한 번으로 장애물을 피하며 얼마나 오래 버티는지 겨루는, 최고 기록이 남는 웹 러닝 게임",
+  design:"노을 지는 하늘색 그라데이션 배경에 검은 실루엣, 레트로 게임 느낌의 단순하고 굵은 스타일",
+  layout:"상단 현재 점수와 최고 기록 표시줄, 중앙 달리기 게임 화면(Canvas), 하단 [점프] 버튼과 조작 안내 구역",
+  visual:"코드로 그린 달리는 캐릭터(다리가 움직이는 실루엣), 바닥선, 오른쪽에서 다가오는 선인장 모양 장애물, 흘러가는 구름",
+  ui:"[게임 시작] 버튼, 화면 아무 곳이나 터치하거나 스페이스바를 눌러도 점프, [다시 하기] 버튼",
+  logic:"- [게임 시작] 클릭 시 바닥과 배경이 왼쪽으로 흐르고 장애물이 일정 간격으로 등장\n- 점프 입력 시 캐릭터가 포물선을 그리며 뛰어오르고, 공중에서는 다시 점프할 수 없음\n- 장애물에 닿으면 게임이 멈추고 최종 점수와 최고 기록을 비교해 표시\n- 시간이 지날수록 이동 속도가 조금씩 빨라짐",
+},
+{
+  name:"② [게임] 기억력 카드 짝 맞추기",
+  idea:"집중이 잘 안 될 때 짧게 머리를 쓰는 놀이가 필요했고, 카드 짝 맞추기를 직접 만들어 보고 싶었음",
+  goal:"뒤집힌 카드에서 같은 그림 짝을 찾아 모두 없애는 시간을 겨루는 기억력 훈련 웹 게임",
+  design:"남색과 노란색 대비가 또렷한 보드게임 느낌의 스타일, 카드에 부드러운 뒤집기 효과",
+  layout:"상단 시도 횟수와 걸린 시간 표시줄, 중앙 4×4 카드 격자 영역, 하단 난이도 선택과 [새 게임] 버튼 구역",
+  visual:"코드로 그린 16장의 카드(뒷면은 물음표, 앞면은 서로 다른 도형)와 짝이 맞을 때 반짝이는 테두리",
+  ui:"카드 클릭(터치), 난이도 선택 버튼(쉬움 4×2 / 보통 4×4), [새 게임] 버튼",
+  logic:"- 카드를 클릭하면 앞면으로 뒤집히고, 두 장이 열리면 같은 그림인지 비교함\n- 짝이 맞으면 그대로 열린 채 흐려지고, 다르면 0.8초 뒤 자동으로 다시 뒤집힘\n- 두 장을 열 때마다 시도 횟수가 1씩 늘고 걸린 시간이 계속 흐름\n- 모든 짝을 찾으면 축하 메시지와 함께 시도 횟수·기록 시간을 보여 줌",
+},
+{
+  name:"③ [게임] 분리배출 스피드 퀴즈",
+  idea:"분리배출을 할 때마다 어느 통에 넣어야 할지 헷갈려 매번 멈칫하게 되는 불편함에서 시작함",
+  goal:"쓰레기 그림을 보고 제한 시간 안에 알맞은 분리수거함을 고르는 퀴즈 게임으로, 분리배출 기준을 놀면서 익히게 하는 앱",
+  design:"재활용을 떠올리게 하는 초록색과 흰색, 둥근 모서리의 밝고 산뜻한 스타일",
+  layout:"상단 남은 시간·점수 표시줄, 중앙 쓰레기 그림 카드 영역, 하단 4개의 분리수거함 버튼 구역",
+  visual:"코드로 그린 쓰레기 그림(페트병, 종이컵, 바나나 껍질 등)과 4개의 분리수거함 아이콘",
+  ui:"[게임 시작] 버튼, 4개의 분리수거함 선택 버튼(플라스틱/종이/캔/일반), [다시 하기] 버튼",
+  logic:"- [게임 시작] 클릭 시 30초 타이머가 작동하고 쓰레기 그림이 무작위로 하나씩 등장\n- 알맞은 분리수거함 버튼을 누르면 점수 +10, 틀리면 -5와 함께 정답 안내 표시\n- 시간이 끝나면 최종 점수와 등급을 보여주고 [다시 하기] 클릭 시 초기화",
+},
+{
+  name:"④ [과학] 달의 위상 시뮬레이터",
+  idea:"달 모양이 매일 조금씩 달라지는 이유를 글과 그림으로만 배우니 잘 상상되지 않아, 직접 움직여 보며 확인하고 싶었음",
+  goal:"날짜를 움직이면 달의 위치와 밝은 부분 모양이 함께 변하는 것을 눈으로 확인하는 달의 위상 시뮬레이터",
+  design:"밤하늘 느낌의 짙은 남색 배경에 노란색 포인트, 우주 도감 같은 차분한 스타일",
+  layout:"상단 [달의 위상] 타이틀과 날짜 표시, 중앙 태양·지구·달 그림 영역, 하단 날짜 슬라이더 구역",
+  visual:"코드로 그린 태양·지구·달, 달 표면이 밝은 부분과 그림자 부분으로 나뉘어 표시",
+  ui:"날짜를 옮기는 슬라이더(1~30일), [자동 재생 / 정지] 버튼, 현재 위상 이름 표시 라벨",
+  logic:"- 슬라이더로 날짜를 바꾸면 달이 지구 주위를 돌고 밝은 부분의 모양이 함께 변함\n- 현재 위상 이름(삭·상현·보름·하현)이 자동으로 표시됨\n- [자동 재생] 클릭 시 1일씩 자동으로 넘어가고, 다시 누르면 정지",
+},
+{
+  name:"⑤ [체험] 지진 대피 시뮬레이터",
+  idea:"지진 대피 훈련을 방송으로만 듣다 보니 실제 상황에서 무엇을 먼저 해야 할지 잘 떠오르지 않아, 직접 선택해 보는 앱을 만들고 싶었음",
+  goal:"지진 상황이 순서대로 주어지고 행동을 직접 골라 보며 올바른 대피 순서를 익히는 웹 시뮬레이터",
+  design:"노란색과 진회색 중심의 안전 표지판 느낌, 큰 글씨와 굵은 테두리의 또렷한 스타일",
+  layout:"상단 남은 시간과 현재 상황 설명, 중앙 흔들리는 교실 그림 영역, 하단 행동 선택 버튼 3개 구역",
+  visual:"코드로 그린 교실 장면(책상, 창문, 사람)과 좌우로 흔들리는 효과, 위에서 떨어지는 물건",
+  ui:"[훈련 시작] 버튼, 상황마다 나타나는 행동 선택 버튼 3개, [처음부터] 버튼",
+  logic:"- [훈련 시작] 클릭 시 화면이 좌우로 흔들리며 첫 번째 상황이 제시됨\n- 행동 버튼을 고르면 정답 여부와 그 이유를 설명하고 다음 상황으로 이동\n- 세 가지 상황이 끝나면 안전 점수와 함께 올바른 대피 순서를 정리해 보여 줌",
+},
+{
+  name:"⑥ [학습] 영어 단어 암기 게임",
+  idea:"영어 단어를 공책에 반복해 쓰는 방식이 지겹고 금방 잊어버려서, 게임처럼 반복하면 오래 기억될 것 같았음",
+  goal:"제한 시간 안에 뜻에 맞는 영어 단어의 철자를 완성하는 게임으로, 시험 범위 단어를 즐겁게 외우게 하는 앱",
+  design:"연보라색과 흰색 중심의 부드럽고 동글동글한 스타일",
+  layout:"상단 점수와 남은 시간 표시줄, 중앙 한글 뜻과 빈칸 철자 영역, 하단 알파벳 버튼 구역",
+  visual:"코드로 그린 빈칸 카드(_ _ _ _)와 정답 시 반짝이는 효과, 남은 기회를 나타내는 하트 3개",
+  ui:"[게임 시작] 버튼, 알파벳 선택 버튼, [힌트] 버튼, [다시 하기] 버튼",
+  logic:"- [게임 시작] 클릭 시 단어 하나의 한글 뜻과 빈칸이 나타나고 60초 타이머 작동\n- 알파벳을 누르면 맞을 때 빈칸이 채워지고, 틀리면 하트가 하나 줄어듦\n- 단어를 완성하면 점수 +10과 함께 다음 단어로 넘어가고, 하트가 모두 사라지면 결과 화면 표시",
+},
+{
+  name:"⑦ [생활] 용돈 관리 대시보드",
+  idea:"용돈을 어디에 썼는지 기억이 안 나서 월말마다 돈이 사라진 느낌이 드는 게 답답했음",
+  goal:"지출을 항목별로 기록하면 그래프로 한눈에 보여 주어, 돈이 새는 부분을 스스로 찾게 하는 용돈 관리 앱",
+  design:"민트색과 흰색 중심의 깔끔한 카드 스타일, 숫자가 잘 보이는 굵은 글씨",
+  layout:"상단 이번 달 남은 금액 카드, 중앙 항목별 원그래프 영역, 하단 지출 입력 폼과 기록 목록 배치",
+  visual:"코드로 그린 원그래프(항목별 색상 구분)와 항목 아이콘(간식·교통·문구 등)",
+  ui:"금액 입력창, 항목 선택 버튼(간식/교통/문구/기타), [기록하기] 버튼, [전체 지우기] 버튼",
+  logic:"- [기록하기] 클릭 시 입력한 금액과 항목이 목록에 추가되고 남은 금액이 자동으로 줄어듦\n- 항목별 합계에 따라 원그래프의 비율이 실시간으로 다시 그려짐\n- 가장 많이 쓴 항목을 찾아 '이번 달엔 ○○에 가장 많이 썼어요' 안내 표시",
+},
+{
+  name:"⑧ [생활] 집중 공부 타이머",
+  idea:"공부를 시작해도 휴대폰을 자꾸 보게 되어, 25분만 집중하고 5분 쉬는 방법을 화면으로 관리하고 싶었음",
+  goal:"25분 집중과 5분 휴식을 반복하며 오늘 집중한 시간이 자동으로 쌓이는 공부 타이머 앱",
+  design:"베이지색과 짙은 갈색 중심의 차분한 스타일, 큰 숫자와 여백이 넉넉한 화면",
+  layout:"상단 오늘 누적 집중 시간, 중앙 원형 게이지와 남은 시간 숫자, 하단 시작·정지 버튼과 완료한 사이클 표시 구역",
+  visual:"코드로 그린 원형 진행 게이지(남은 시간만큼 줄어드는 원)와 완료한 사이클을 나타내는 도장 아이콘",
+  ui:"[시작 / 일시정지] 버튼, [건너뛰기] 버튼, 집중 시간 선택 버튼(25분 / 40분), [오늘 기록 지우기] 버튼",
+  logic:"- [시작] 클릭 시 원형 게이지가 줄어들며 25분 카운트다운 진행\n- 시간이 끝나면 알림 문구와 함께 자동으로 5분 휴식으로 전환되고 도장이 하나 찍힘\n- 휴식이 끝나면 다시 집중 시간으로 돌아오며 오늘 누적 집중 시간이 계속 더해짐\n- [건너뛰기] 클릭 시 현재 구간을 끝내고 다음 구간으로 넘어감",
+},
+{
+  name:"⑨ [생활] 우리 반 자리 뽑기 룰렛",
+  idea:"자리를 바꿀 때마다 종이를 접어 뽑느라 시간이 오래 걸리고 시비도 생겨서, 화면으로 공정하게 뽑고 싶었음",
+  goal:"학생 이름을 넣고 돌리면 무작위로 순서를 정해 주는, 우리 반 자리 뽑기 룰렛 앱",
+  design:"알록달록한 파스텔 색과 흰색, 축제 느낌의 밝고 신나는 스타일",
+  layout:"상단 참가자 수 표시, 중앙 큰 원형 룰렛 영역, 하단 이름 입력창과 버튼 구역 배치",
+  visual:"코드로 그린 원형 룰렛(이름마다 다른 색 조각)과 위쪽에서 가리키는 삼각형 바늘",
+  ui:"이름 입력창, [추가] 버튼, [돌리기] 버튼, [결과 초기화] 버튼",
+  logic:"- 이름을 입력하고 [추가] 하면 룰렛 조각이 하나 늘어나며 색이 자동으로 배정됨\n- [돌리기] 클릭 시 룰렛이 점점 느려지다 멈추고 바늘이 가리킨 이름이 크게 표시됨\n- 뽑힌 이름은 목록에서 빠져 다음 뽑기에서 중복되지 않음",
+},
+{
+  name:"⑩ [생활] 물 마시기 트래커",
+  idea:"하루에 물을 얼마나 마셨는지 기억이 안 나서 늘 부족했는데, 눈에 보이면 챙겨 마실 것 같았음",
+  goal:"한 컵씩 기록하면 물병이 차오르며 하루 목표 달성률을 보여 주는 물 마시기 습관 앱",
+  design:"하늘색과 흰색 중심의 시원하고 투명한 느낌, 둥근 모서리 카드 스타일",
+  layout:"상단 오늘 마신 양과 목표량 표시, 중앙 물이 차오르는 큰 물병 그림, 하단 기록 버튼과 오늘의 기록 목록 구역",
+  visual:"코드로 그린 물병과 마신 양만큼 차오르는 물결, 목표 달성 시 위로 떠오르는 물방울 효과",
+  ui:"[＋ 한 컵(200ml)] 버튼, [－ 취소] 버튼, 목표량 설정 슬라이더(1000~3000ml), [오늘 초기화] 버튼",
+  logic:"- [＋ 한 컵] 클릭 시 200ml가 더해지고 물병의 물 높이와 달성 퍼센트가 함께 올라감\n- 목표량에 도달하면 물병이 반짝이며 '오늘 목표 달성!' 메시지가 표시됨\n- [－ 취소] 클릭 시 마지막 기록이 취소되고, [오늘 초기화]로 처음부터 다시 시작\n- 물을 마신 시각이 아래 목록에 순서대로 쌓임",
+}
+];
+
+/* =======================================================================
+   입력 항목 정의
+   ======================================================================= */
+const FIELDS = {
+  idea:{ host:"f-idea", tag:"1단계",
+    q:"어떤 생각이나 영감에서 시작했나요?",
+    hint:"일상에서 느낀 불편함, 수업 시간에 배운 원리, 궁금했던 현상 등에서 출발해 보세요.",
+    ph:"예) ○○할 때 ○○가 불편해서 / 과학 시간에 배운 ○○ 원리를 직접 확인해 보고 싶어서…" },
+  goal:{ host:"f-goal", tag:"2단계",
+    q:"무엇을 어떻게 만들 건가요?",
+    hint:"‘누구에게 어떤 도움이 되는 무슨 앱인지’를 한두 문장으로 정의하세요.",
+    ph:"예) ○○을 ○○하여 ○○할 수 있는 웹 기반 ○○ 앱 개발" },
+  design:{ host:"f-core", tag:"디자인",
+    q:"앱의 전체적인 시각적 분위기와 색상 스타일은?",
+    hint:"주 색상, 테마, 글꼴 느낌 등을 적으세요.",
+    ph:"예) ○○색과 ○○색 중심의 ○○한 스타일" },
+  layout:{ host:"f-core", tag:"레이아웃",
+    q:"화면을 어떤 구역으로 나누고, 무엇을 어디에 배치할까요?",
+    hint:"상단 / 중앙 / 하단으로 나누어 각 구역에 들어갈 요소를 명시하세요.",
+    ph:"예) 상단 ○○ 타이틀, 중앙 ○○ 영역, 하단 ○○ 버튼 구역" },
+  visual:{ host:"f-core", tag:"시각 객체",
+    q:"화면에 보여야 하는 주요 캐릭터·물체·그래픽은?",
+    hint:"이미지 오류를 막기 위해 ‘코드로 직접 그리는’ 그래픽으로 지정하는 것이 좋습니다.",
+    ph:"예) 코드로 직접 그려지는 ○○, ○○, ○○" },
+  ui:{ host:"f-core", tag:"UI/UX 조작부",
+    q:"사용자가 누르거나 조작하는 입력 도구는?",
+    hint:"버튼, 슬라이더, 드롭다운, 입력창 등 조작 도구의 이름과 역할을 적으세요.",
+    ph:"예) [○○] 버튼, ○○ 조절 슬라이더, ○○ 선택 드롭다운" },
+  logic:{ host:"f-core", tag:"핵심 로직",
+    q:"조작에 따라 앱 내부에서 무슨 일이 일어나나요?",
+    hint:"‘무엇을 하면 → 무엇이 된다’ 형태로, 조건·계산 규칙·실행 흐름을 한 줄씩 적으세요.",
+    ph:"예) - [○○] 클릭 시 ○○ 됨\n- ○○ 하면 ○○ 증가하고 ○○로 전환됨" }
+};
+Object.keys(FIELDS).forEach(k=>{ FIELDS[k].ex = EXAMPLES.map(e=>e[k]); });
+
+const CORE_KEYS = ["design","layout","visual","ui","logic"];
+const CORE_LABEL = {design:"디자인",layout:"레이아웃",visual:"시각 객체",ui:"UI/UX 조작부",logic:"핵심 로직"};
+
+/* =======================================================================
+   상태
+   ======================================================================= */
+const STORE_KEY = "appPlanner2026";
+let state = { step:1, data:{}, checks:{}, unlocked:1, addon:"", sketch:"", drawn:false };
+try{
+  const s = JSON.parse(localStorage.getItem(STORE_KEY)||"{}");
+  if(s && typeof s==="object") state = Object.assign(state, s);
+}catch(e){}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch(e){ /* 저장 공간 초과 시 무시 */ }
+}
+function val(k){ return (state.data[k]||"").trim(); }
+
+/* =======================================================================
+   글 입력 필드 + 예시 (10종 선택)
+   ======================================================================= */
+function makeField(key){
+  const f = FIELDS[key];
+  const box = document.createElement("div");
+  box.className = "field";
+  box.innerHTML = `
+    <div class="q"><span class="tag">${f.tag}</span><span>${f.q}</span></div>
+    <p class="hint">${f.hint}</p>
+    <textarea id="ta-${key}" placeholder="${f.ph.replace(/"/g,'&quot;')}"></textarea>
+    <div class="ex-bar">
+      <button class="btn ex" id="exbtn-${key}">💡 예시 보기 (10종)</button>
+      <span class="ex-note">예시를 골라 넣고 고쳐 써도 되고, 처음부터 직접 입력해도 됩니다.</span>
+    </div>
+    <div class="ex-box" id="exbox-${key}">
+      <div class="ex-head">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span class="lbl">📄 예시 고르기</span>
+          <select id="exsel-${key}"></select>
+        </div>
+        <span class="ex-count" id="excount-${key}"></span>
+      </div>
+      <div class="ex-text" id="extext-${key}"></div>
+      <div class="ex-actions">
+        <button class="btn" id="exnext-${key}">🔄 다른 예시 보기</button>
+        <button class="btn use" id="exuse-${key}">⬇️ 이 예시 넣어 보기</button>
+      </div>
+    </div>
+  `;
+  document.getElementById(f.host).appendChild(box);
+
+  const ta = box.querySelector("#ta-"+key);
+  ta.value = state.data[key] || "";
+  if(ta.value.trim()) ta.classList.add("filled");
+  ta.addEventListener("input", ()=>{
+    state.data[key] = ta.value;
+    ta.classList.toggle("filled", !!ta.value.trim());
+    save();
+  });
+
+  const sel = box.querySelector("#exsel-"+key);
+  sel.innerHTML = EXAMPLES.map((e,i)=>`<option value="${i}">${e.name}</option>`).join("");
+
+  let idx = 0;
+  const exBox = box.querySelector("#exbox-"+key);
+  function paint(){
+    box.querySelector("#extext-"+key).textContent = f.ex[idx];
+    box.querySelector("#excount-"+key).textContent = (idx+1) + " / " + EXAMPLES.length;
+    sel.value = String(idx);
+  }
+  paint();
+
+  box.querySelector("#exbtn-"+key).addEventListener("click", ()=>{
+    const open = exBox.classList.toggle("open");
+    box.querySelector("#exbtn-"+key).textContent = open ? "🙈 예시 닫기" : "💡 예시 보기 (10종)";
+  });
+  box.querySelector("#exnext-"+key).addEventListener("click", ()=>{ idx=(idx+1)%EXAMPLES.length; paint(); });
+  sel.addEventListener("change", ()=>{ idx = Number(sel.value); paint(); });
+  box.querySelector("#exuse-"+key).addEventListener("click", ()=>{
+    ta.value = f.ex[idx];
+    state.data[key] = ta.value;
+    ta.classList.add("filled");
+    save();
+    toast("예시를 넣었어요! 내 아이디어로 바꿔 써 보세요 ✏️");
+    ta.focus();
+  });
+}
+["idea","goal",...CORE_KEYS].forEach(makeField);
+
+/* =======================================================================
+   3단계 · 그림 캔버스
+   ======================================================================= */
+const cv = document.getElementById("sketch");
+const cx = cv.getContext("2d");
+const COLORS = ["#2B2B2B","#E8552E","#2E7DD1","#3FA34D","#F2B705","#8557C7"];
+const SIZES = [3,7,14];
+let pen = {color:COLORS[0], size:3, eraser:false};
+let drawing = false, last = null;
+const undoStack = [];
+
+function fillWhite(){ cx.fillStyle="#fff"; cx.fillRect(0,0,cv.width,cv.height); }
+fillWhite();
+if(state.sketch){
+  const img = new Image();
+  img.onload = ()=>{ cx.drawImage(img,0,0,cv.width,cv.height); };
+  img.src = state.sketch;
+}
+
+// 색 / 굵기 버튼
+const colorHost = document.getElementById("colors");
+COLORS.forEach((c,i)=>{
+  const b = document.createElement("button");
+  b.className = "swatch" + (i===0?" on":"");
+  b.style.background = c;
+  b.title = "색 선택";
+  b.addEventListener("click", ()=>{
+    pen.color = c; pen.eraser = false;
+    document.querySelectorAll(".swatch").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    document.getElementById("eraserBtn").style.background = "";
+  });
+  colorHost.appendChild(b);
+});
+const sizeHost = document.getElementById("sizes");
+SIZES.forEach((s,i)=>{
+  const b = document.createElement("button");
+  b.className = "size" + (i===0?" on":"");
+  b.innerHTML = `<i style="width:${4+i*4}px;height:${4+i*4}px"></i>`;
+  b.addEventListener("click", ()=>{
+    pen.size = s;
+    document.querySelectorAll(".size").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+  });
+  sizeHost.appendChild(b);
+});
+document.getElementById("eraserBtn").addEventListener("click", (e)=>{
+  pen.eraser = true;
+  e.currentTarget.style.background = "#DCEBFF";
+  document.querySelectorAll(".swatch").forEach(x=>x.classList.remove("on"));
+});
+document.getElementById("undoBtn").addEventListener("click", ()=>{
+  if(!undoStack.length){ toast("되돌릴 그림이 없어요."); return; }
+  const url = undoStack.pop();
+  const img = new Image();
+  img.onload = ()=>{ fillWhite(); cx.drawImage(img,0,0,cv.width,cv.height); persist(); };
+  img.src = url;
+});
+document.getElementById("clearBtn").addEventListener("click", ()=>{
+  if(!confirm("그림을 모두 지울까요?")) return;
+  snapshot(); fillWhite(); state.drawn=false; persist();
+});
+
+function snapshot(){
+  try{ undoStack.push(cv.toDataURL("image/png")); }catch(e){}
+  if(undoStack.length>12) undoStack.shift();
+}
+function persist(){
+  try{ state.sketch = cv.toDataURL("image/png"); }catch(e){}
+  save();
+}
+function pos(e){
+  const r = cv.getBoundingClientRect();
+  return { x:(e.clientX-r.left)*cv.width/r.width, y:(e.clientY-r.top)*cv.height/r.height };
+}
+cv.addEventListener("pointerdown", e=>{
+  cv.setPointerCapture(e.pointerId);
+  snapshot();
+  drawing = true; last = pos(e);
+  cx.lineCap = "round"; cx.lineJoin = "round";
+  cx.beginPath(); cx.arc(last.x,last.y,(pen.eraser?pen.size*3:pen.size)/2,0,Math.PI*2);
+  cx.fillStyle = pen.eraser ? "#fff" : pen.color; cx.fill();
+});
+cv.addEventListener("pointermove", e=>{
+  if(!drawing) return;
+  const p = pos(e);
+  cx.strokeStyle = pen.eraser ? "#fff" : pen.color;
+  cx.lineWidth = pen.eraser ? pen.size*3 : pen.size;
+  cx.beginPath(); cx.moveTo(last.x,last.y); cx.lineTo(p.x,p.y); cx.stroke();
+  last = p;
+});
+["pointerup","pointercancel","pointerleave"].forEach(ev=>{
+  cv.addEventListener(ev, ()=>{
+    if(!drawing) return;
+    drawing = false; state.drawn = true; persist();
+  });
+});
+
+/* =======================================================================
+   3단계 · 스케치 분석
+   ======================================================================= */
+const checksHost = document.getElementById("sketchChecks");
+CORE_KEYS.forEach(k=>{
+  const lab = document.createElement("label");
+  lab.innerHTML = `<input type="checkbox" data-k="${k}"><span>${CORE_LABEL[k]}</span>`;
+  checksHost.appendChild(lab);
+  const cb = lab.querySelector("input");
+  cb.checked = !!state.checks[k];
+  lab.classList.toggle("on", cb.checked);
+  cb.addEventListener("change", ()=>{
+    state.checks[k] = cb.checked;
+    lab.classList.toggle("on", cb.checked);
+    save(); paintVerdict();
+  });
+});
+function paintVerdict(){
+  const inn = CORE_KEYS.filter(k=>state.checks[k]);
+  const out = CORE_KEYS.filter(k=>!state.checks[k]);
+  const v = document.getElementById("verdict");
+  if(inn.length===0){ v.textContent = "아직 체크한 항목이 없습니다."; return; }
+  v.innerHTML =
+    `✅ <b>반영된 항목 (${inn.length}가지)</b> : ${inn.map(k=>CORE_LABEL[k]).join(", ")}<br>` +
+    (out.length
+      ? `🔧 <b>보완이 필요한 항목 (${out.length}가지)</b> : ${out.map(k=>CORE_LABEL[k]).join(", ")} → 4단계에서 반드시 채우세요!`
+      : `🎉 5대 핵심 요소가 모두 들어있어요! 4단계에서 더 정교하게 다듬어 봅시다.`);
+}
+paintVerdict();
+
+/* =======================================================================
+   프롬프트 생성
+   ======================================================================= */
+function bullets(text){
+  return (text||"").split("\n").map(l=>l.trim()).filter(Boolean)
+    .map(l=> l.startsWith("-") ? l : "- " + l).join("\n");
+}
+function buildPrompts(){
+  const intro = `${val("idea")}\n이런 생각에서 출발해서 아래와 같은 앱을 만들 거야.\n[목표] ${val("goal")}`;
+  const p1 =
+`${intro}
+
+먼저 앱의 기본 뼈대(디자인과 화면 배치)부터 만들어 줘.
+1. 디자인: ${val("design")} (Tailwind CSS 활용, 모바일·태블릿 반응형)
+2. 레이아웃: ${val("layout")}
+
+조건
+- HTML 파일 하나로 동작하게 만들어 줘.
+- 이번 단계에서는 화면 구성과 디자인까지만 완성하고, 기능은 다음 단계에서 추가할게.`;
+
+  const p2 =
+`이전 구조에서 다음 변경사항을 추가 반영해 줘.
+
+3. 시각 객체 (추가):
+${bullets(val("visual"))}
+
+조건
+- 외부 이미지 파일은 쓰지 말고 HTML5 Canvas나 코드 그래픽으로 직접 그려 줘.
+- 앞 단계의 디자인과 레이아웃은 그대로 유지해 줘.`;
+
+  const p3 =
+`이전 구조에서 다음 변경사항을 추가 반영해 줘.
+
+4. UI/UX 조작부 (추가):
+${bullets(val("ui"))}
+
+조건
+- 버튼과 조작 도구를 레이아웃에서 정한 위치에 배치해 줘.
+- 아직 세부 동작은 연결하지 말고, 눌리는 느낌과 화면 배치까지만 완성해 줘.`;
+
+  const p4 =
+`이전 구조에서 다음 변경사항을 추가 반영해 줘.
+
+5. 핵심 로직 (추가):
+${bullets(val("logic"))}
+
+조건
+- 위 흐름대로 실제로 작동하게 만들어 줘.
+- 앞에서 만든 디자인·레이아웃·시각 객체·조작부는 바꾸지 말아 줘.`;
+
+  const extra = (state.addon||"").trim();
+  const p5 =
+`앱이 기획대로 잘 작동하는지 점검하고 완성도를 높여 줘.
+
+[기획 의도]
+${val("goal")}
+
+[점검할 것]
+- 모든 버튼과 조작 도구가 정상적으로 동작하는지
+- 휴대폰·태블릿 화면에서 요소가 잘리거나 깨지지 않는지
+- 콘솔 오류가 있는지 확인하고 있으면 수정
+
+[추가·변경하고 싶은 기능]
+${extra ? bullets(extra) : "- (여기에 직접 추가하고 싶은 기능을 적어 보세요)"}`;
+
+  return [
+    {t:"기본 뼈대 만들기", sub:"아이디어 + 목표 + 디자인 + 레이아웃", body:p1,
+     note:"결과가 나오면 화면 색감과 구역 배치가 내 그림과 맞는지 먼저 확인하세요."},
+    {t:"시각 객체 넣기", sub:"화면에 보여야 할 그림·캐릭터·물체", body:p2,
+     note:"그림이 엉뚱하게 나오면 크기·위치·색을 한 줄로 덧붙여 다시 요청하세요."},
+    {t:"조작부 붙이기", sub:"버튼·슬라이더 등 입력 도구", body:p3,
+     note:"아직 안 눌려도 정상입니다. 위치와 모양만 확인하세요."},
+    {t:"핵심 로직 작동시키기", sub:"조건·계산 규칙·실행 흐름", body:p4,
+     note:"오류가 나면 Gemini의 [오류 수정] 버튼을 먼저 눌러 보세요."},
+    {t:"점검하고 업그레이드하기", sub:"검증 + 내가 원하는 기능 추가", body:p5,
+     note:"이 단계는 여러 번 반복할수록 앱의 완성도가 올라갑니다.", editable:true}
+  ];
+}
+
+/* =======================================================================
+   결과 화면
+   ======================================================================= */
+function renderResult(){
+  const rows = [
+    ["1. 아이디어 발굴","idea"],["2. 프로젝트 목표","goal"],["3. 자유 스케치","__sketch"],
+    ["4-① 디자인","design"],["4-② 레이아웃","layout"],["4-③ 시각 객체","visual"],
+    ["4-④ UI/UX 조작부","ui"],["4-⑤ 핵심 로직","logic"]
+  ];
+  document.getElementById("summary").innerHTML =
+    `<h3>📄 나의 앱 기획서 한 장</h3>` +
+    rows.map(([k,key])=>{
+      if(key==="__sketch"){
+        const v = state.drawn && state.sketch
+          ? `<img src="${state.sketch}" alt="내 스케치">`
+          : `<span class="empty">⚠️ 아직 그림이 없습니다.</span>`;
+        return `<div class="row"><div class="k">${k}</div><div class="v">${v}</div></div>`;
+      }
+      const v = val(key);
+      return `<div class="row"><div class="k">${k}</div><div class="v ${v?"":"empty"}">${
+        v ? escapeHtml(v) : "⚠️ 비어 있음 — AI가 임의로 채웁니다!"}</div></div>`;
+    }).join("");
+
+  const list = buildPrompts();
+  const host = document.getElementById("prompts");
+  host.innerHTML = "";
+  list.forEach((p,i)=>{
+    const n = i+1;
+    const card = document.createElement("div");
+    card.className = "pcard" + (n <= state.unlocked ? " open" : "") + (n < state.unlocked ? " done" : "");
+    card.innerHTML = `
+      <div class="ph">
+        <div class="num">${n}</div>
+        <div class="t">${p.t}</div>
+        <div class="sub">${p.sub}</div>
+      </div>
+      <div class="pbody">
+        ${p.editable ? `<textarea class="addon" id="addonBox" placeholder="추가하고 싶은 기능을 한 줄씩 적으면 아래 프롬프트에 자동으로 들어갑니다. 예) 점수가 100점을 넘으면 축하 효과 보여 줘">${escapeHtml(state.addon||"")}</textarea>` : ""}
+        <pre id="pre-${n}">${escapeHtml(p.body)}</pre>
+        <div class="pactions">
+          <button class="btn primary" data-copy="${n}">📋 ${n}단계 프롬프트 복사</button>
+          ${n < 5 ? `<button class="btn" data-next="${n}">✅ 실행했어요 · ${n+1}단계 열기</button>` : ""}
+        </div>
+        <div class="note">💡 ${p.note}</div>
+      </div>
+      <div class="lock">
+        <div>
+          <p>🔒 ${n-1}단계를 먼저 실행해 주세요</p>
+          <div class="small">앞 단계 결과를 확인한 뒤 이 단계를 열어야<br>내 기획대로 앱이 쌓여 올라갑니다.</div>
+        </div>
+      </div>
+    `;
+    host.appendChild(card);
+    card.querySelector('[data-copy]').addEventListener("click", ()=>{
+      copyText(document.getElementById("pre-"+n).textContent);
+      if(state.unlocked === n && n < 5){ state.unlocked = n+1; save(); renderResult(); }
+    });
+    const nb = card.querySelector('[data-next]');
+    if(nb) nb.addEventListener("click", ()=>{
+      state.unlocked = Math.max(state.unlocked, n+1); save(); renderResult();
+      document.querySelectorAll(".pcard")[n].scrollIntoView({behavior:"smooth",block:"center"});
+    });
+  });
+
+  const addonBox = document.getElementById("addonBox");
+  if(addonBox){
+    addonBox.addEventListener("input", ()=>{
+      state.addon = addonBox.value; save();
+      document.getElementById("pre-5").textContent = buildPrompts()[4].body;
+    });
+  }
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+}
+
+/* =======================================================================
+   단계 이동
+   ======================================================================= */
+const STEP_TITLES = ["아이디어 발굴","목표 설정","자유 스케치","핵심 구조","프롬프트"];
+function renderSteps(){
+  document.getElementById("steps").innerHTML = STEP_TITLES.map((t,i)=>{
+    const n=i+1;
+    const cls = n===state.step ? "dot on" : (n<state.step ? "dot done" : "dot");
+    return `<button class="${cls}" data-go="${n}"><span class="n">${n}</span>${t}</button>`;
+  }).join("");
+  document.querySelectorAll("[data-go]").forEach(b=>{
+    b.addEventListener("click", ()=> go(Number(b.dataset.go), true));
+  });
+}
+function go(n, skipCheck){
+  if(!skipCheck && n > state.step){
+    if(state.step===3){
+      if(!state.drawn){ toast("아이디어를 그림으로 그려 주세요! ✏️"); cv.scrollIntoView({behavior:"smooth",block:"center"}); return; }
+    }else{
+      const need = state.step===1 ? ["idea"] : state.step===2 ? ["goal"] : state.step===4 ? CORE_KEYS : [];
+      const missing = need.filter(k=>!val(k));
+      if(missing.length){
+        toast("아직 비어 있어요: " + missing.map(k=>FIELDS[k].tag).join(", "));
+        const el = document.getElementById("ta-"+missing[0]);
+        el.focus(); el.scrollIntoView({behavior:"smooth",block:"center"});
+        return;
+      }
+    }
+  }
+  state.step = Math.min(5, Math.max(1, n));
+  save();
+  document.querySelectorAll(".panel").forEach(p=>{
+    p.classList.toggle("hide", Number(p.dataset.step) !== state.step);
+  });
+  document.getElementById("mainNav").style.display = state.step===5 ? "none" : "flex";
+  document.getElementById("prevBtn").style.visibility = state.step===1 ? "hidden" : "visible";
+  document.getElementById("nextBtn").textContent = state.step===4 ? "🚀 프롬프트 만들기" : "다음 →";
+  if(state.step===5) renderResult();
+  renderSteps();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.getElementById("nextBtn").addEventListener("click", ()=> go(state.step+1));
+document.getElementById("prevBtn").addEventListener("click", ()=> go(state.step-1, true));
+document.getElementById("backTo4").addEventListener("click", ()=> go(4, true));
+document.getElementById("copyAll").addEventListener("click", ()=>{
+  const all = buildPrompts().map((p,i)=>`===== ${i+1}단계 · ${p.t} =====\n${p.body}`).join("\n\n\n");
+  copyText(all, "전체 프롬프트를 복사했어요. 그래도 한 단계씩 실행하세요!");
+});
+document.getElementById("resetBtn").addEventListener("click", ()=>{
+  if(!confirm("입력한 내용과 그림을 모두 지울까요?")) return;
+  localStorage.removeItem(STORE_KEY);
+  location.reload();
+});
+
+/* =======================================================================
+   유틸
+   ======================================================================= */
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove("on"), 2200);
+}
+function copyText(text, msg){
+  const done = ()=> toast(msg || "복사 완료! Gemini Canvas에 붙여넣으세요 📋");
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(done, ()=>fallback(text,done));
+  } else fallback(text,done);
+}
+function fallback(text, done){
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand("copy"); done(); }catch(e){ toast("복사에 실패했어요. 직접 드래그해서 복사해 주세요."); }
+  document.body.removeChild(ta);
+}
+
+go(state.step, true);
+</script>
+</body>
+</html>
